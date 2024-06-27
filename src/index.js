@@ -8,7 +8,6 @@ let dateFetch = 0;
 let tenthDayFetch = false;
 
 //GET 9 HOURS FROM NOW
-const today = new Date(); // Current date and time in the local time zone
 const timeZoneOffsetInHours = 9; // GMT+9 time zone
 const offsetInMs = timeZoneOffsetInHours * 60 * 60 * 1000; // Offset in milliseconds
 
@@ -23,9 +22,9 @@ const fetchData = async () => {
     try {
         let dateToFetch;
         if (tenthDayFetch) {
-            dateToFetch = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000 + offsetInMs);
+            dateToFetch = new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000 + offsetInMs);
         } else {
-            dateToFetch = new Date(today.getTime() + dateFetch * 24 * 60 * 60 * 1000 + offsetInMs);
+            dateToFetch = new Date(new Date().getTime() + dateFetch * 24 * 60 * 60 * 1000 + offsetInMs);
             if (dateFetch === 10) {
                 tenthDayFetch = true
                 dateFetch = 0;
