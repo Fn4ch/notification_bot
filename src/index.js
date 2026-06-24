@@ -12,7 +12,8 @@ if (!token || !chatRoomId) {
 
 let latestTimeSlots = [];
 let dateFetch = 0;
-let tenthDayFetch = false;
+let fetchCount = 0;
+const TENTH_DAY_EVERY = 10; // запрос на 10й день раз в N обычных запросов
 
 //GET 9 HOURS FROM NOW
 const timeZoneOffsetInHours = 9; // GMT+9 time zone
@@ -33,17 +34,13 @@ const pluralize = (n) => {
 
 const fetchData = async () => {
     try {
+        fetchCount++;
         let dateToFetch;
-        if (tenthDayFetch) {
+        if (fetchCount % TENTH_DAY_EVERY === 0) {
             dateToFetch = new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000 + offsetInMs);
         } else {
             dateToFetch = new Date(new Date().getTime() + dateFetch * 24 * 60 * 60 * 1000 + offsetInMs);
-            if (dateFetch === 10) {
-                tenthDayFetch = true
-                dateFetch = 0;
-            } else {
-                dateFetch += 1;
-            }
+            dateFetch = dateFetch >= 9 ? 0 : dateFetch + 1;
         }
 
         const formattedDate = formatDate(dateToFetch);
@@ -86,9 +83,8 @@ const fetchData = async () => {
             });
         }
 
-        tenthDayFetch = !tenthDayFetch;
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 };
-setInterval(fetchData, 4000);
+setInterval(fetchData, 5000);
