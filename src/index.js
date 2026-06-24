@@ -1,9 +1,16 @@
+require('dotenv').config();
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
 
+const token = process.env.BOT_TOKEN;
+const chatRoomId = process.env.CHAT_ID;
+
+if (!token || !chatRoomId) {
+    console.error('BOT_TOKEN and CHAT_ID must be set in .env');
+    process.exit(1);
+}
+
 let latestTimeSlots = [];
-const chatRoomId = '-1002205789353';
-const token = '6953920700:AAEsu7vPOdurQ7m3kINbgya4ehG1m1tq6to';
 let dateFetch = 0;
 let tenthDayFetch = false;
 
@@ -16,7 +23,13 @@ const bot = new TelegramBot(token, { polling: true });
 const formatDate = (date) => {
     return date?.toISOString().split('T')[0];
 };
-bot.sendMessage(chatRoomId, 'Data fetch started.');
+bot.sendMessage(chatRoomId, 'Data fetch started.', { disable_notification: true });
+
+const pluralize = (n) => {
+    if (n % 10 === 1 && n % 100 !== 11) return '';
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'а';
+    return 'ов';
+};
 
 const fetchData = async () => {
     try {
@@ -43,14 +56,16 @@ const fetchData = async () => {
 
         const availableSlots = [];
 
-        for (let index = 0; index < latestTimeSlots.length; index++) {
-            if (latestTimeSlots[index].availableToBook) {
+        for (const slot of latestTimeSlots) {
+            if (slot.availableToBook) {
+                const time = slot.dateBooked.split('T')[1].slice(0, 5);
+                const label = slot.freeSlotCount > 0 ? `${time} (${slot.freeSlotCount} св.)` : time;
                 availableSlots.push([
                     {
-                        text: latestTimeSlots[index].dateBooked,
+                        text: label,
                         callback_data: JSON.stringify({
                             stage: 1,
-                            value: latestTimeSlots[index].dateBooked,
+                            value: slot.dateBooked,
                         }),
                     },
                 ]);
@@ -58,7 +73,9 @@ const fetchData = async () => {
         }
 
         if (availableSlots.length) {
-            bot.sendMessage(chatRoomId, `${formattedDate}:`, {
+            const header = `📅 ${formattedDate} — найдено ${availableSlots.length} слот${pluralize(availableSlots.length)}:`;
+            bot.sendMessage(chatRoomId, header, {
+                disable_notification: true,
                 reply_markup: {
                     inline_keyboard: availableSlots,
                 },
