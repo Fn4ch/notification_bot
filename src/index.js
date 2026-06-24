@@ -5,7 +5,7 @@ const { Bot } = require('grammy');
 const token = process.env.BOT_TOKEN;
 let activeChatId = process.env.CHAT_ID;
 
-if (!token || !chatRoomId) {
+if (!token || !activeChatId) {
     console.error('BOT_TOKEN and CHAT_ID must be set in .env');
     process.exit(1);
 }
