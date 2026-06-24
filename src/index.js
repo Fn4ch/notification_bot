@@ -1,6 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
-const TelegramBot = require('node-telegram-bot-api');
+const { Bot } = require('grammy');
 
 const token = process.env.BOT_TOKEN;
 const chatRoomId = process.env.CHAT_ID;
@@ -18,12 +18,12 @@ let tenthDayFetch = false;
 const timeZoneOffsetInHours = 9; // GMT+9 time zone
 const offsetInMs = timeZoneOffsetInHours * 60 * 60 * 1000; // Offset in milliseconds
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new Bot(token);
 
 const formatDate = (date) => {
     return date?.toISOString().split('T')[0];
 };
-bot.sendMessage(chatRoomId, 'Data fetch started.', { disable_notification: true });
+bot.api.sendMessage(chatRoomId, 'Data fetch started.', { disable_notification: true });
 
 const pluralize = (n) => {
     if (n % 10 === 1 && n % 100 !== 11) return '';
@@ -74,7 +74,7 @@ const fetchData = async () => {
 
         if (availableSlots.length) {
             const header = `📅 ${formattedDate} — найдено ${availableSlots.length} слот${pluralize(availableSlots.length)}:`;
-            bot.sendMessage(chatRoomId, header, {
+            bot.api.sendMessage(chatRoomId, header, {
                 disable_notification: true,
                 reply_markup: {
                     inline_keyboard: availableSlots,
