@@ -3,7 +3,7 @@ const axios = require('axios');
 const { Bot } = require('grammy');
 
 const token = process.env.BOT_TOKEN;
-const chatRoomId = process.env.CHAT_ID;
+let activeChatId = process.env.CHAT_ID;
 
 if (!token || !chatRoomId) {
     console.error('BOT_TOKEN and CHAT_ID must be set in .env');
@@ -20,6 +20,19 @@ const timeZoneOffsetInHours = 9; // GMT+9 time zone
 const offsetInMs = timeZoneOffsetInHours * 60 * 60 * 1000; // Offset in milliseconds
 
 const bot = new Bot(token);
+
+const sendMsg = async (text, options = {}) => {
+    try {
+        await bot.api.sendMessage(activeChatId, text, options);
+    } catch (err) {
+        if (err.parameters?.migrate_to_chat_id) {
+            activeChatId = String(err.parameters.migrate_to_chat_id);
+            await bot.api.sendMessage(activeChatId, text, options);
+        } else {
+            throw err;
+        }
+    }
+};
 
 const formatDate = (date) => {
     return date?.toISOString().split('T')[0];
@@ -87,7 +100,7 @@ const fetchData = async () => {
             }
 
             const header = `📅 ${formattedDate} — найдено ${buttons.length} слот${pluralize(buttons.length)}:\n${ranges.join('\n')}`;
-            bot.api.sendMessage(chatRoomId, header, { disable_notification: true });
+            await sendMsg(header, { disable_notification: true });
         } else if (buttons.length) {
             const COLS = 4;
             const keyboard = [];
@@ -96,7 +109,7 @@ const fetchData = async () => {
             }
 
             const header = `📅 ${formattedDate} — найдено ${buttons.length} слот${pluralize(buttons.length)}:`;
-            bot.api.sendMessage(chatRoomId, header, {
+            await sendMsg(header, {
                 disable_notification: true,
                 reply_markup: {
                     inline_keyboard: keyboard,
