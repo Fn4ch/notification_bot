@@ -24,7 +24,6 @@ const bot = new Bot(token);
 const formatDate = (date) => {
     return date?.toISOString().split('T')[0];
 };
-bot.api.sendMessage(chatRoomId, 'Data fetch started.', { disable_notification: true });
 
 const pluralize = (n) => {
     if (n % 10 === 1 && n % 100 !== 11) return '';
@@ -109,4 +108,4 @@ const fetchData = async () => {
         console.error('Error fetching data:', error);
     }
 };
-setInterval(fetchData, 5000);
+setInterval(fetchData, (Math.floor(Math.random() * 7) + 5) * 1000);
