@@ -54,30 +54,34 @@ const fetchData = async () => {
 
         latestTimeSlots = response?.data;
 
-        const availableSlots = [];
+        const buttons = [];
 
         for (const slot of latestTimeSlots) {
             if (slot.availableToBook) {
                 const time = slot.dateBooked.split('T')[1].slice(0, 5);
                 const label = slot.freeSlotCount > 0 ? `${time} (${slot.freeSlotCount} св.)` : time;
-                availableSlots.push([
-                    {
-                        text: label,
-                        callback_data: JSON.stringify({
-                            stage: 1,
-                            value: slot.dateBooked,
-                        }),
-                    },
-                ]);
+                buttons.push({
+                    text: label,
+                    callback_data: JSON.stringify({
+                        stage: 1,
+                        value: slot.dateBooked,
+                    }),
+                });
             }
         }
 
-        if (availableSlots.length) {
-            const header = `📅 ${formattedDate} — найдено ${availableSlots.length} слот${pluralize(availableSlots.length)}:`;
+        if (buttons.length) {
+            const COLS = 4;
+            const keyboard = [];
+            for (let i = 0; i < buttons.length; i += COLS) {
+                keyboard.push(buttons.slice(i, i + COLS));
+            }
+
+            const header = `📅 ${formattedDate} — найдено ${buttons.length} слот${pluralize(buttons.length)}:`;
             bot.api.sendMessage(chatRoomId, header, {
                 disable_notification: true,
                 reply_markup: {
-                    inline_keyboard: availableSlots,
+                    inline_keyboard: keyboard,
                 },
             });
         }
