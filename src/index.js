@@ -67,7 +67,29 @@ const fetchData = async () => {
             }
         }
 
-        if (buttons.length) {
+        if (buttons.length > 20) {
+            const ranges = [];
+            let rangeStart = null;
+            let rangeEnd = null;
+
+            for (const slot of latestTimeSlots) {
+                if (slot.availableToBook) {
+                    const time = slot.dateBooked.split('T')[1].slice(0, 5);
+                    if (rangeStart === null) rangeStart = time;
+                    rangeEnd = time;
+                } else if (rangeStart !== null) {
+                    ranges.push(rangeStart === rangeEnd ? rangeStart : `${rangeStart} — ${rangeEnd}`);
+                    rangeStart = null;
+                    rangeEnd = null;
+                }
+            }
+            if (rangeStart !== null) {
+                ranges.push(rangeStart === rangeEnd ? rangeStart : `${rangeStart} — ${rangeEnd}`);
+            }
+
+            const header = `📅 ${formattedDate} — найдено ${buttons.length} слот${pluralize(buttons.length)}:\n${ranges.join('\n')}`;
+            bot.api.sendMessage(chatRoomId, header, { disable_notification: true });
+        } else if (buttons.length) {
             const COLS = 4;
             const keyboard = [];
             for (let i = 0; i < buttons.length; i += COLS) {
