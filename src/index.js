@@ -12,8 +12,8 @@ if (!token || !activeChatId) {
 
 let latestTimeSlots = [];
 let dateFetch = 0;
-let fetchCount = 0;
-const TENTH_DAY_EVERY = 10; // запрос на 10й день раз в N обычных запросов
+// let fetchCount = 0;
+// const TENTH_DAY_EVERY = 10; // запрос на 10й день раз в N обычных запросов
 
 //GET 9 HOURS FROM NOW
 const timeZoneOffsetInHours = 9; // GMT+9 time zone
@@ -46,14 +46,10 @@ const pluralize = (n) => {
 
 const fetchData = async () => {
     try {
-        fetchCount++;
+        // fetchCount++;
         let dateToFetch;
-        if (fetchCount % TENTH_DAY_EVERY === 0) {
-            dateToFetch = new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000 + offsetInMs);
-        } else {
             dateToFetch = new Date(new Date().getTime() + dateFetch * 24 * 60 * 60 * 1000 + offsetInMs);
-            dateFetch = dateFetch >= 9 ? 0 : dateFetch + 1;
-        }
+            dateFetch = dateFetch >= 4 ? 0 : dateFetch + 1;
 
         const formattedDate = formatDate(dateToFetch);
 
