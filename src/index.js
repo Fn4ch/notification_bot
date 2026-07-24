@@ -1,27 +1,62 @@
 require('dotenv').config();
 const axios = require('axios');
-const { Bot } = require('grammy');
+const { Bot: TGBot } = require('grammy');
+const { Bot: MaxBot, Keyboard: MaxKeyboard } = require('@maxhub/max-bot-api')
 
-const token = process.env.BOT_TOKEN;
-let activeChatId = process.env.CHAT_ID;
+
+
+const token = process.env.BOT_TOKEN
+let activeChatId = process.env.CHAT_ID
 
 if (!token || !activeChatId) {
     console.error('BOT_TOKEN and CHAT_ID must be set in .env');
     process.exit(1);
 }
 
+const maxToken = process.env.MAX_BOT_ACCESS_TOKEN
+const maxChatId = process.env.MAX_CHAT_ID
+
+let maxBot = null;
+if (maxToken && maxChatId) {
+    if (MaxBot) {
+        maxBot = new MaxBot(maxToken)
+    } else {
+        console.error(
+            'MAX_BOT_ACCESS_TOKEN/MAX_CHAT_ID заданы, но пакет @maxhub/max-bot-api не установлен ' +
+            '(yarn add @maxhub/max-bot-api) — уведомления в MAX отправляться не будут'
+        );
+    }
+}
+
 let latestTimeSlots = [];
 let dateFetch = 0;
-// let fetchCount = 0;
-// const TENTH_DAY_EVERY = 10; // запрос на 10й день раз в N обычных запросов
 
 //GET 9 HOURS FROM NOW
 const timeZoneOffsetInHours = 9; // GMT+9 time zone
 const offsetInMs = timeZoneOffsetInHours * 60 * 60 * 1000; // Offset in milliseconds
 
-const bot = new Bot(token);
+const bot = new TGBot(token)
 
-const sendMsg = async (text, options = {}) => {
+const toMaxExtra = (options = {}) => {
+    const extra = {};
+
+    if ('disable_notification' in options) {
+        extra.notify = !options.disable_notification;
+    }
+
+    const rows = options.reply_markup?.inline_keyboard;
+    if (rows?.length && MaxKeyboard) {
+        extra.attachments = [
+            MaxKeyboard.inlineKeyboard(
+                rows.map((row) => row.map((btn) => MaxKeyboard.button.callback(btn.text, btn.callback_data)))
+            ),
+        ];
+    }
+
+    return extra;
+};
+
+const sendToTelegram = async (text, options) => {
     try {
         await bot.api.sendMessage(activeChatId, text, options);
     } catch (err) {
@@ -32,6 +67,24 @@ const sendMsg = async (text, options = {}) => {
             throw err;
         }
     }
+};
+
+const sendToMax = async (text, options) => {
+    if (!maxBot) return;
+    try {
+        await maxBot.api.sendMessageToChat(maxChatId, text, toMaxExtra(options));
+    } catch (err) {
+        console.error('Error sending to MAX:', err);
+    }
+};
+
+const sendMsg = async (text, options = {}) => {
+    try {
+        await sendToTelegram(text, options);
+    } catch (err) {
+        console.error('Error sending to Telegram:', err);
+    }
+    await sendToMax(text, options);
 };
 
 const formatDate = (date) => {
@@ -46,7 +99,6 @@ const pluralize = (n) => {
 
 const fetchData = async () => {
     try {
-        // fetchCount++;
         let dateToFetch;
             dateToFetch = new Date(new Date().getTime() + dateFetch * 24 * 60 * 60 * 1000 + offsetInMs);
             dateFetch = dateFetch >= 4 ? 0 : dateFetch + 1;
