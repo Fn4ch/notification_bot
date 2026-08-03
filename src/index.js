@@ -169,4 +169,4 @@ const fetchData = async () => {
         console.error('Error fetching data:', error);
     }
 };
-setInterval(fetchData, (Math.floor(Math.random() * 7) + 5) * 1000);
+setInterval(fetchData, (Math.floor(Math.random() * 7) + 10) * 1000);
